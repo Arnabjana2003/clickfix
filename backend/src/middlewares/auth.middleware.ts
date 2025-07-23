@@ -6,13 +6,13 @@ import asyncHandler from "../utils/asyncHandler";
 import userModel, { IUser } from "../models/user.model";
 
 const getTokenFromRequest = (req: Request): string | null => {
+  if (req.cookies && req.cookies.accessToken) {
+    return req.cookies.accessToken;
+  }
+
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     return authHeader.split(" ")[1];
-  }
-
-  if (req.cookies && req.cookies.accessToken) {
-    return req.cookies.accessToken;
   }
 
   return null;
@@ -36,10 +36,18 @@ export default asyncHandler(
       throw new ApiError(401, "Unauthorized Request");
     }
 
-    const decodedValue = jwt.verify(
-      token,
-      envConfig.server.accessTokenSecret as string
-    ) as JwtPayload;
+    let decodedValue: JwtPayload;
+    try {
+      decodedValue = jwt.verify(
+        token,
+        envConfig.server.accessTokenSecret as string
+      ) as JwtPayload;
+    } catch (err: any) {
+      if (err.name === "TokenExpiredError") {
+        throw new ApiError(401, "TOKEN_EXPIRED");
+      }
+      throw new ApiError(401, "Unauthorized Request");
+    }
 
     const user = await userModel.findById<IUser>(decodedValue?.id);
     if (!user) throw new ApiError(404, "User not found");

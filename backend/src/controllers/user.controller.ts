@@ -43,14 +43,14 @@ export const registerUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 15 * 60 * 1000,
+    // maxAge: 24 * 60 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res
@@ -65,11 +65,12 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
-  const { phone, password } = req.body;
-  if (!phone || !password)
-    throw new ApiError(400, "Phone and password are required");
+  const { email, password } = req.body;
+  console.log({ email, password })
+  if (!email || !password)
+    throw new ApiError(400, "email and password are required");
 
-  const user = await userModel.findOne({ phone }).select("+password").lean();
+  const user = await userModel.findOne({ email }).select("+password").lean();
   if (!user) throw new ApiError(404, "User not found");
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -83,15 +84,15 @@ export const loginUser = asyncHandler(async (req, res) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 15 * 60 * 1000,
+    // sameSite: "strict",
+    // maxAge: 24 * 60 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    // sameSite: "strict",
+    // maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   delete (user as any).password;
@@ -132,6 +133,7 @@ export const getCurrentUser = asyncHandler(async (req:AuthenticatedRequest, res)
 });
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
+  console.log("Refresh token triggered")
   const token = req.cookies.refreshToken || req.body.refreshToken;
   if (!token) throw new ApiError(401, "Refresh token missing");
 
@@ -150,7 +152,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
+      // maxAge: 24 * 60 * 60 * 1000,
     });
 
     res

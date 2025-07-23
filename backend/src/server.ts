@@ -12,8 +12,20 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import sendMail from "./utils/nodemailer";
 import { getWelcomeMail } from "./utils/mailTempletes";
+import {
+  checkSessionStatus,
+  createStripeOrder,
+  handleStripeWebhook,
+} from "./utils/stripeServices";
 
 const app = express();
+// app.post(
+//   "/stripe-webhook",
+//   express.raw({ type: "application/json" }),
+//   async (req, res) => {
+//     handleStripeWebhook(req, res);
+//   }
+// );
 
 app.use(helmet()); // Security headers
 
@@ -29,8 +41,8 @@ app.use(cookieParser());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 10,
+  windowMs: 2 * 60 * 1000,
+  max: 30,
 });
 app.use(limiter);
 
@@ -39,7 +51,6 @@ const logDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
-
 const logFile = fs
   .createWriteStream(path.join(logDir, "access.log"), {
     flags: "a",
@@ -57,12 +68,11 @@ morgan.token("json", (req: Request, res: Response) => {
     // userAgent: req.get("user-agent") || null,
   });
 });
-app.use(morgan(":json", { stream: logFile }));
+// app.use(morgan(":json", { stream: logFile }));
 
 // database connection
 connectDB();
 
-// Graceful shutdown
 process.on("SIGINT", async () => {
   await mongoose.connection.close();
   console.log("Mongoose connection closed due to app termination");
@@ -90,6 +100,25 @@ app.get("/test-mail", async (req, res) => {
   } catch (error) {
     res.send(error);
   }
+});
+
+app.get("/stripe", async (req, res) => {
+  const url = await createStripeOrder();
+  if (url) {
+    res.redirect(303, url);
+  } else {
+    res.send("error");
+  }
+});
+
+app.get("/status", async (req, res) => {
+  const { session_id } = req.query;
+  if (session_id) {
+    const r = await checkSessionStatus(session_id.toString());
+    res.send(r);
+    return;
+  }
+  res.send("error");
 });
 
 //controller apis

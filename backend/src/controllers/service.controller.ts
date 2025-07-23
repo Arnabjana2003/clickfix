@@ -7,6 +7,7 @@ import ApiResponse from "../utils/ApiResponse";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import serviceProviderModel from "../models/serviceProvider.model";
 import subCategory from "../models/subCategory";
+import { RoleBasedAuthenticatedRequest } from "../middlewares/permission.middleware";
 
 export const createNewService = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -66,9 +67,9 @@ export const updateService = asyncHandler(
 );
 
 export const deleteService = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: RoleBasedAuthenticatedRequest, res: Response) => {
     const { serviceId } = req.params;
-    const serviceProviderId = req.user?._id;
+    const serviceProviderId = req?.service_provider?._id;
 
     const deleted = await serviceModel.findOneAndDelete({
       _id: serviceId,
@@ -92,9 +93,11 @@ export const getMyServices = asyncHandler(
 
     if (!provider) throw new ApiError(404, "You are not a service provider");
 
-    const services = await serviceModel.find({
-      serviceProviderId: provider._id,
-    });
+    const services = await serviceModel
+      .find({
+        serviceProviderId: provider._id,
+      })
+      .populate([{ path: "subCategoryId" }, { path: "categoryId" }]);
 
     res
       .status(200)

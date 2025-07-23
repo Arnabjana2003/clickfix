@@ -14,6 +14,17 @@ export default {
     privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
   },
+  phonepePg:{
+    MERCHANT_ID: process.env.PHONEPE_MERCHANT_ID!,
+    SALT_KEY: process.env.PHONEPE_SALT_KEY!,
+    SALT_INDEX:process.env.PHONEPE_SALT_INDEX!,
+    WEBHOOK_USERNAME:process.env.PHONEPE_WEBHOOK_USERNAME!,
+    WEBHOOK_PASSWORD:process.env.PHONEPE_WEBHOOK_PASSWORD!,
+  },
+  stripe:{
+    STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY!,
+    STRIPE_WEBHOOK_SECRET:process.env.STRIPE_WEBHOOK_SECRET!
+  },
   server:{
     accessTokenSecret: process.env.ACCESS_TOKEN_SECRET!,
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET!,

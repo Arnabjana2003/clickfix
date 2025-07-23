@@ -3,7 +3,7 @@ import envConfig from "../envConfig";
 
 export const generateAccessToken = (payload: object) => {
   return jwt.sign(payload, envConfig.server.accessTokenSecret as string, {
-    expiresIn: "15m",
+    expiresIn: "1d",
   });
 };
 

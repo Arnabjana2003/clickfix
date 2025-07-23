@@ -14,6 +14,14 @@ import Protector from "./components/Protector.jsx";
 import UserSignup from "./pages/UserSignup.jsx";
 import UserLogin from "./pages/UserLogin.jsx";
 import ProviderRegisterPage from "./pages/ProviderRegisterPage.jsx";
+import ProviderDashboard from "./pages/ProviderDashboard.jsx";
+import ReactModal from "react-modal";
+import UserBookingDetails from "./pages/UserBookingDetails.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
+import ExploreCategories from "./pages/ExploreCategories.jsx";
+import CategoryServices from "./pages/CategoryServices.jsx";
+import Booking from "./pages/Booking.jsx";
+import PaymentComponent from "./components/PaymentComponent.jsx";
 
 const router = createBrowserRouter([
   {
@@ -27,7 +35,7 @@ const router = createBrowserRouter([
       {
         path: "/register",
         element: (
-          <Protector type="customer" authentication={false}>
+          <Protector authentication={false}>
             <UserSignup />
           </Protector>
         ),
@@ -35,22 +43,80 @@ const router = createBrowserRouter([
       {
         path: "/provider/register",
         element: (
-          <Protector type="provider" authentication={false}>
+          <Protector authentication={true}>
             <ProviderRegisterPage />
+          </Protector>
+        ),
+      },
+      {
+        path: "/provider/dashboard",
+        element: (
+          <Protector authentication={true}>
+            <ProviderDashboard />
           </Protector>
         ),
       },
       {
         path: "/login",
         element: (
-          <Protector type="customer" authentication={false}>
+          <Protector authentication={false}>
             <UserLogin />
+          </Protector>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <Protector authentication={true}>
+            <UserProfile />
+          </Protector>
+        ),
+      },
+      {
+        path: "/bookings",
+        element: (
+          <Protector authentication={true}>
+            <UserBookingDetails />
+          </Protector>
+        ),
+      },
+      {
+        path: "/services",
+        element: (
+          <Protector authentication={true}>
+            <ExploreCategories />
+          </Protector>
+        ),
+      },
+      {
+        path: "/services/:categoryId",
+        element: (
+          <Protector authentication={true}>
+            <CategoryServices />
+          </Protector>
+        ),
+      },
+      {
+        path: "/services/:categoryId/:subCategoryId",
+        element: (
+          <Protector authentication={true}>
+            <Booking />
+          </Protector>
+        ),
+      },
+      {
+        path: "/pay",
+        element: (
+          <Protector authentication={true}>
+            <PaymentComponent />
           </Protector>
         ),
       },
     ],
   },
 ]);
+
+ReactModal.setAppElement('#root');
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

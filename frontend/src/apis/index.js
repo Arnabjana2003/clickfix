@@ -1,5 +1,5 @@
 import axios from "axios";
-import AuthService from "./AuthService";
+import AuthService from "./authService";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1",
@@ -35,24 +35,27 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is not a 401 or it's a refresh token request, reject
+    // Skip if not a 401 error or it's a refresh token request
     if (
       error.response?.status !== 401 ||
-      originalRequest.url === "/user/refresh-token"
+      originalRequest.url.includes("/refresh-token")
     ) {
       return Promise.reject(error);
     }
 
+    const isTokenExpired = error?.response?.data?.message === "TOKEN_EXPIRED";
+
+    if (!isTokenExpired) {
+      return Promise.reject(error);
+    }
+
+    // Handle concurrent requests during token refresh
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedRequestsQueue.push({ resolve, reject });
       })
-        .then(() => {
-          return API(originalRequest);
-        })
-        .catch((err) => {
-          return Promise.reject(err);
-        });
+        .then(() => API(originalRequest))
+        .catch((err) => Promise.reject(err));
     }
 
     isRefreshing = true;
@@ -61,17 +64,20 @@ API.interceptors.response.use(
       const { accessToken } = await AuthService.refreshAccessToken();
 
       localStorage.setItem("accessToken", accessToken);
-
       API.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-      failedRequestsQueue.forEach((pending) => pending.resolve());
+      failedRequestsQueue.forEach(({ resolve }) => resolve());
 
+      // Retry original request
       return API(originalRequest);
     } catch (refreshError) {
-      failedRequestsQueue.forEach((pending) => pending.reject(refreshError));
+      // Reject all queued requests on refresh failure
+      failedRequestsQueue.forEach(({ reject }) => reject(refreshError));
+
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       window.location.href = "/login";
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

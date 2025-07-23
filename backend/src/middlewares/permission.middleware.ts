@@ -10,7 +10,7 @@ import asyncHandler from "../utils/asyncHandler";
 
 const roles = {
   customer: ["service:request"],
-  service_provider: ["service:create", "service:accept", "service:update"],
+  service_provider: ["service:create", "service:accept", "service:update", "service:delete"],
   admin: [
     "user:create",
     "user:delete",

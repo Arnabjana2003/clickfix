@@ -10,9 +10,22 @@ import { Request, Response } from "express";
 export const createSubCategoty = asyncHandler(
   async (req: RoleBasedAuthenticatedRequest, res) => {
     const admin = req.admin!;
-    const { subcategoryName, categoryId, imageUrl, fileId, metadata, price,estimatedTimeInMinute } =
-      req.body;
-    if (!subcategoryName || !categoryId || !price || !imageUrl || !estimatedTimeInMinute)
+    const {
+      subcategoryName,
+      categoryId,
+      imageUrl,
+      fileId,
+      metadata,
+      price,
+      estimatedTimeInMinute,
+    } = req.body;
+    if (
+      !subcategoryName ||
+      !categoryId ||
+      !price ||
+      !imageUrl ||
+      !estimatedTimeInMinute
+    )
       throw new ApiError(
         400,
         "Subcategory name, CategoryId, estimatedTimeInMinute, Price and Image url are required"
@@ -64,6 +77,7 @@ export const removeSubCategoty = asyncHandler(
 export const getSubCategories = asyncHandler(
   async (req: Request, res: Response) => {
     const { categoryId } = req?.query;
+    console.log(categoryId);
     if (!categoryId)
       throw new ApiError(
         400,
@@ -72,7 +86,6 @@ export const getSubCategories = asyncHandler(
     const subcategories = await subCategory
       .find({ categoryId, isActive: true })
       .sort({ createdAt: -1 });
-
     res
       .status(200)
       .json(

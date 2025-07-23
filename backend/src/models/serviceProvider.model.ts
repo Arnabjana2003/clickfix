@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
+import constants from "../utils/constants";
 
 export interface IServiceProvider extends Document {
   userId: Types.ObjectId;
@@ -37,18 +38,16 @@ const ServiceProviderSchema = new Schema<IServiceProvider>(
     },
     workingRadiusInKm: {
       type: Number,
-      default: 5,
+      default: constants.defaultWorkingRadiusInKm ,
     },
     location: {
       type: {
         type: String,
         enum: ["Point"],
-        required: true,
         default: "Point",
       },
       coordinates: {
         type: [Number], // [lng, lat]
-        required: true,
       },
     },
     skills: {

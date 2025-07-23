@@ -11,92 +11,143 @@ import {
 } from "../utils/generateTokens";
 import serviceModel, { IService } from "../models/service.model";
 import { RoleBasedAuthenticatedRequest } from "../middlewares/permission.middleware";
+import { setAuthCookies } from "../utils/cookieServices";
 
-export const register = asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const user = req.user;
-  const { longitude, latitude, workingRadiusInKm, skills } = req.body;
+export const upgradeToServiceProvider = asyncHandler(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    const { longitude, latitude } = req.body;
 
-  if (!longitude || !latitude)
-    throw new ApiError(400, "Required details are missing");
-
-  const isProvider = await serviceProviderModel.findOne({
-    userId: user?._id,
-  });
-  if (isProvider)
-    throw new ApiError(400, "User has already registered as Service Provider");
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const updatedUser = await userModel
-      .findByIdAndUpdate(
-        user?._id,
-        { role: "service_provider" },
-        { session, new: true }
-      )
-      .lean();
-    if (!updatedUser) {
-      throw new ApiError(404, "Failed to registered as Service provider");
+    if (!longitude || !latitude) {
+      throw new ApiError(
+        400,
+        "Location coordinates (longitude and latitude) are required"
+      );
     }
 
-    const newProvider = await serviceProviderModel.create(
-      [
-        {
-          userId: user?._id,
-          workingRadiusInKm,
-          location: {
-            coordinates: [longitude, latitude],
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const isProvider = await serviceProviderModel.findOne({
+        userId: user?.id,
+      });
+      if (isProvider) {
+        throw new ApiError(400, "User is already a Service Provider");
+      }
+
+      const updatedUser = await userModel
+        .findByIdAndUpdate(
+          user?.id,
+          { role: "service_provider" },
+          { session, new: true }
+        )
+        .lean();
+
+      if (!updatedUser) {
+        throw new ApiError(404, "Failed to upgrade to Service Provider");
+      }
+
+      const newProvider = await serviceProviderModel.create(
+        [
+          {
+            userId: user?.id,
+            location: {
+              type: "Point",
+              coordinates: [parseFloat(longitude), parseFloat(latitude)],
+            },
           },
-          skills,
-        },
-      ],
-      { session }
-    );
+        ],
+        { session }
+      );
 
-    // -------------update role in tokens---------
-    const accessToken = generateAccessToken({
-      id: updatedUser._id,
-      role: updatedUser.role,
-    });
-
-    const refreshToken = generateRefreshToken({
-      id: updatedUser._id,
-      role: updatedUser.role,
-    });
-
-    // Set new cookies
-    res
-      .cookie("accessToken", accessToken, {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 15 * 60 * 1000,
-      })
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+      const accessToken = generateAccessToken({
+        id: updatedUser._id,
+        role: updatedUser.role,
       });
 
-    res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          newProvider[0].toObject(),
-          "Successfully registered as Service Provider"
-        )
-      );
-    await session.commitTransaction();
-    session.endSession();
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
+      const refreshToken = generateRefreshToken({
+        id: updatedUser._id,
+        role: updatedUser.role,
+      });
+
+      setAuthCookies(res, accessToken, refreshToken);
+
+      res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            newProvider[0].toObject(),
+            "Successfully upgraded to Service Provider with location"
+          )
+        );
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
-});
+);
+
+export const completeServiceProviderProfile = asyncHandler(
+  async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    const { longitude, latitude, workingRadiusInKm, skills } = req.body;
+
+    if (!longitude || !latitude || !workingRadiusInKm || !skills) {
+      throw new ApiError(400, "All fields are required to complete profile");
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const existingProvider = await serviceProviderModel
+        .findOne({ userId: user?.id })
+        .session(session);
+      if (!existingProvider) {
+        throw new ApiError(400, "User is not registered as a Service Provider");
+      }
+
+      const updatedProvider = await serviceProviderModel
+        .findByIdAndUpdate(
+          existingProvider._id,
+          {
+            workingRadiusInKm,
+            location: {
+              type: "Point",
+              coordinates: [longitude, latitude],
+            },
+            skills,
+            isProfileCompleted: true,
+          },
+          { session, new: true }
+        )
+        .lean();
+
+      res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            updatedProvider,
+            "Service Provider profile completed successfully"
+          )
+        );
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+);
 
 export const addNewService = asyncHandler(
   async (req: RoleBasedAuthenticatedRequest, res) => {
@@ -113,7 +164,7 @@ export const addNewService = asyncHandler(
       tags,
       experienceInYear,
     });
-
+    console.log(newService);
     res
       .status(201)
       .json(new ApiResponse(201, newService, "Service created successfully"));

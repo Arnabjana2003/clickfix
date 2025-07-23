@@ -1,18 +1,34 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import AuthService from "../apis/authService";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { login } from "../store/auth.slice";
 
 export default function UserLogin() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [isLoading,setIsLoading] = useState(false)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", form);
-    // TODO: Add your login logic here
+    try {
+      setIsLoading(true)
+      const res = await AuthService.login(form);
+      dispatch(login(res?.data?.user));
+      navigate("/");
+    } catch (error) {
+      console.log(error,"in auserlogin comp")
+      toast.error(String(error?.message || error));
+    }finally{
+      setIsLoading(false)
+    }
   };
 
   return (
@@ -64,7 +80,7 @@ export default function UserLogin() {
             type="submit"
             className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
           >
-            Log In
+            {isLoading ? "Loggin In":"Log In"}
           </motion.button>
         </form>
 
@@ -74,6 +90,7 @@ export default function UserLogin() {
             Register
           </Link>
         </p>
+        {/* TODO: forget password */}
       </motion.div>
     </div>
   );

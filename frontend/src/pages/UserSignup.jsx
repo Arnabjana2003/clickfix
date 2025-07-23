@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
-import AuthService from "../apis/AuthService";
 import { useNavigation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../store/auth.slice";
+import AuthService from "../apis/authService";
 
 export default function UserSignup() {
   const dispatch = useDispatch();
@@ -44,7 +44,6 @@ export default function UserSignup() {
       toast.error("Password is required");
       return false;
     } else if (form.password.length < 8) {
-      console.log("failed lean")
       toast.error("Password must be at least 8 characters");
       return false;
     }
@@ -56,7 +55,6 @@ export default function UserSignup() {
     e.preventDefault();
 
     if (!validateForm()) {
-      console.log("validation failed")
       return;
     }
     setIsSubmitting(true);
@@ -67,8 +65,6 @@ export default function UserSignup() {
         email: form.email,
         password: form.password,
       });
-
-      console.log(response);
       dispatch(login(response?.data?.user));
 
       toast.success("Registration successful!");

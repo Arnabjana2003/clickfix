@@ -17,9 +17,13 @@ const authSlice = createSlice({
       state.status = false;
       state.userData = {};
     },
+    upgradeUser:(state,action)=>{
+      state.userData.role = action.payload.newRole
+      state.userData.roleData = action.payload.roleData
+    }
   },
 });
 
 
-export const {login,logout} = authSlice.actions
+export const {login,logout,upgradeUser} = authSlice.actions
 export default authSlice.reducer

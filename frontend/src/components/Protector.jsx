@@ -6,16 +6,29 @@ function Protector({ authentication = true, children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const authStatus = useSelector((state) => state?.auth?.status);
+  const userData = useSelector((state) => state?.auth?.userData);
 
   useEffect(() => {
-    console.log(authStatus);
-    if (authentication && !authStatus) {
+    // console.log(userData);
+    const redirectPath = location.state?.from || "/";
+
+    if (
+      location.pathname == "/provider/register" &&
+      userData?.role == "service_provider"
+    ) {
+      navigate("/provider/dashboard", { replace: true });
+    } else if (
+      location.pathname.startsWith("/provider") &&
+      location.pathname != "/provider/register" &&
+      userData?.role != "service_provider"
+    ) {
+      navigate(redirectPath, { replace: true });
+    } else if (authentication && !authStatus) {
       navigate("/login", { replace: true });
     } else if (!authentication && authStatus) {
-      const redirectPath = location.state?.from || "/";
       navigate(redirectPath, { replace: true });
     }
-  }, [authStatus, authentication]);
+  }, [authStatus, userData, authentication]);
   return <>{children}</>;
 }
 

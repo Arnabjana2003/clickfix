@@ -1,3 +1,4 @@
 export default {
-    deepColor:"blue"
+    deepColor:"blue",
+    providerPricePercentage:80
 }
