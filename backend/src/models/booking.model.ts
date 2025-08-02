@@ -5,16 +5,16 @@ export interface IBooking extends Document {
   userId: Types.ObjectId;
   subCategoryId: Types.ObjectId;
   preferredTime: Date;
-  isProviderAssigned:boolean;
-  serviceProviderId:Types.ObjectId;
-  scheduledAt:Date;
-  endTime:Date;
+  isProviderAssigned: boolean;
+  serviceProviderId: Types.ObjectId;
+  scheduledAt: Date;
+  endTime: Date;
   status: "pending" | "confirmed" | "ongoing" | "completed" | "cancelled";
   location: {
     type: "Point";
     coordinates: [number, number]; // [longitude, latitude]
   };
-  address: IAddress;
+  // address: IAddress;
   notes: string;
   paymentMode: "cod" | "online";
   totalPrice: number;
@@ -36,23 +36,23 @@ const BookingSchema = new Schema<IBooking>(
     },
     subCategoryId: {
       type: Schema.Types.ObjectId,
-      ref: "Service",
+      ref: "SubCategory",
       required: true,
     },
-    address: Object,
+    // address: Object,
     status: {
       type: String,
       enum: ["pending", "confirmed", "ongoing", "completed", "cancelled"],
       default: "pending",
     },
     preferredTime: Date,
-    isProviderAssigned:{
-      type:Boolean,
-      default:false
+    isProviderAssigned: {
+      type: Boolean,
+      default: false,
     },
-    serviceProviderId:{
-      type:Schema.Types.ObjectId,
-      ref:"ServiceProvider"
+    serviceProviderId: {
+      type: Schema.Types.ObjectId,
+      ref: "ServiceProvider",
     },
     scheduledAt: Date,
     endTime: Date,

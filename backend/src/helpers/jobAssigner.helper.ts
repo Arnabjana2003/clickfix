@@ -18,17 +18,22 @@
 
 // Step 4: Assign to the first available, highest-scoring provider
 
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import bookingModel from "../models/booking.model";
 import serviceModel from "../models/service.model";
 
 interface AssignmentInput {
-  categoryId: mongoose.Types.ObjectId;
+  bookingId: mongoose.Types.ObjectId;
   subCategoryId: mongoose.Types.ObjectId;
   longitude: number | string;
   latitude: number | string;
   preferredTime: Date | string;
   durationInMinutes: number;
+}
+
+interface ISubCategory {
+  _id: Types.ObjectId;
+  estimatedTimeInMinute: number;
 }
 
 const ASSIGNMENT_WEIGHTS = {
@@ -37,22 +42,16 @@ const ASSIGNMENT_WEIGHTS = {
   workload: 4,
 };
 
-const assignJob = async ({
-  categoryId,
-  subCategoryId,
-  longitude,
-  latitude,
-  preferredTime,
-  durationInMinutes,
-}: AssignmentInput) => {
-  console.log({
-    categoryId,
-    subCategoryId,
-    longitude,
-    latitude,
-    preferredTime,
-    durationInMinutes,
-  });
+const assignJob = async (bookingId: string) => {
+  const bookingDetails = await bookingModel
+    .findById(bookingId)
+    .populate<{ subCategoryId: ISubCategory }>("subCategoryId");
+  const subCategoryId = bookingDetails?.subCategoryId?._id;
+  const durationInMinutes =
+    bookingDetails?.subCategoryId?.estimatedTimeInMinute!;
+  const longitude = bookingDetails?.location.coordinates[0];
+  const latitude = bookingDetails?.location.coordinates[1];
+  const preferredTime = bookingDetails?.preferredTime!;
   const searchRadius = 20000; // meters
   const bufferMinutes = 15;
   const newStart = new Date(preferredTime);
@@ -63,8 +62,7 @@ const assignJob = async ({
   const providers = await serviceModel.aggregate([
     {
       $match: {
-        categoryId,
-        subCategoryId,
+        subCategoryId: new mongoose.Types.ObjectId(subCategoryId),
       },
     },
 
@@ -115,8 +113,6 @@ const assignJob = async ({
     },
   ]);
 
-  // console.log(providers);
-
   // Score providers
   const maxActiveJobs = 5;
 
@@ -128,7 +124,8 @@ const assignJob = async ({
       });
 
       const score =
-        ((searchRadius/1000) - provider?.Provider?.distanceInKm) * ASSIGNMENT_WEIGHTS.distance +
+        (searchRadius / 1000 - provider?.Provider?.distanceInKm) *
+          ASSIGNMENT_WEIGHTS.distance +
         (provider?.rating || 4.5) * ASSIGNMENT_WEIGHTS.rating +
         (maxActiveJobs - activeJobs) * ASSIGNMENT_WEIGHTS.workload;
 
@@ -139,9 +136,10 @@ const assignJob = async ({
       };
     })
   );
-  console.log(scoredProviders.map((pvd) => pvd.score));
 
   scoredProviders.sort((a, b) => b.score - a.score);
+
+  let foundedProvider = null;
 
   // Check availability for top providers
   for (const candidate of scoredProviders) {
@@ -161,12 +159,29 @@ const assignJob = async ({
     });
 
     if (!hasConflict) {
-      console.log(candidate.provider);
-      return candidate.provider;
+      foundedProvider = candidate.provider?.Provider;
+      break;
     }
   }
 
-  return null;
+  if (foundedProvider) {
+    const updatedBooking = await bookingModel.findByIdAndUpdate(
+      bookingId,
+      {
+        scheduledAt: preferredTime,
+        serviceProviderId: foundedProvider._id,
+        status: "confirmed",
+        isProviderAssigned: true,
+        endTime: newEnd,
+      },
+      { new: true }
+    );
+    console.log("Provider assigned: ", updatedBooking);
+    return updatedBooking
+  } else {
+    console.log("No provider found at the time, try later");
+    // TODO: try later
+  }
 };
 
 export default assignJob;

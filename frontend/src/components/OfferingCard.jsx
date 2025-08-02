@@ -1,13 +1,16 @@
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 
 function OfferingCard({
   themeColor = "bg-green-400",
   imgUrl = "https://trustworthyhomeservices.in/wp-content/uploads/2023/05/trustworthy-blog17.jpg",
   heading,
   subHeading,
+  goto=''
 }) {
+  const navigate = useNavigate()
   return (
-    <div className="w-full max-h-48 lg:w-[30%] rounded-lg bg-slate-200 overflow-hidden opacity-100 hover:opacity-80 shadow flex">
+    <div onClick={()=>navigate(goto)} className="w-full max-h-48 lg:w-[30%] rounded-lg bg-slate-200 overflow-hidden opacity-100 hover:opacity-80 shadow flex">
       <div className={`w-[58%] h-full p-5 text-white ${themeColor}`}>
         <h3 className="text-2xl font-semibold">{heading}</h3>
         <p className="text-lg mt-2 text-white">{subHeading}</p>

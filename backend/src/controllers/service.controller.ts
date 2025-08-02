@@ -8,6 +8,7 @@ import { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import serviceProviderModel from "../models/serviceProvider.model";
 import subCategory from "../models/subCategory";
 import { RoleBasedAuthenticatedRequest } from "../middlewares/permission.middleware";
+import bookingModel from "../models/booking.model";
 
 export const createNewService = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -104,3 +105,47 @@ export const getMyServices = asyncHandler(
       .json(new ApiResponse(200, services, "Your services fetched"));
   }
 );
+
+export const getPopularServices = asyncHandler(async (req, res) => {
+  const services = await bookingModel.aggregate([
+    // {
+    //   $match: {
+    //     status: { $in: ["confirmed", "ongoing", "completed"] },
+    //   },
+    // },
+    {
+      $group: {
+        _id: "$subCategoryId",
+        bookingCount: { $sum: 1 },
+        totalRevenue: { $sum: "$price" },
+      },
+    },
+    {
+      $sort: { bookingCount: -1 },
+    },
+    {
+      $limit: 4,
+    },
+    {
+      $lookup: {
+        from: "subcategories",
+        localField: "_id",
+        foreignField: "_id",
+        as: "subCategoryDetails",
+      },
+    },
+    {
+      $unwind: "$subCategoryDetails", // Flatten the joined array
+    },
+    {
+      $project: {
+        subCategory: "$subCategoryDetails",
+        bookingCount: 1,
+        totalRevenue: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  res.status(200).json(new ApiResponse(200, services, "Data fetched"));
+});

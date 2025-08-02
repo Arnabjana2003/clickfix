@@ -1,43 +1,50 @@
 import mongoose, { Date, Schema } from "mongoose";
 import { Document, Types } from "mongoose";
 
-export interface IPayment extends Document{
-    bookingId: Types.ObjectId;
-    userId: Types.ObjectId;
-    transactionId: string;
-    amount: number;
-    paymentGateway:string,
-    status: "initiated" | "success" | "pending" | "failed";
-    pgResponse: any;
-    createdAt: Date;
-    updateedAt: Date;
+export interface IPayment extends Document {
+  bookingId: Types.ObjectId;
+  userId: Types.ObjectId;
+  transactionId: string;
+  amount: number;
+  paymentGateway: string;
+  status: "initiated" | "success" | "pending" | "failed";
+  pgResponse: any;
+  createdAt: Date;
+  updateedAt: Date;
 }
 
-const PaymentSchema = new Schema<IPayment>({
-    bookingId:{
-        type: Schema.Types.ObjectId,
-        ref:"Booking",
-        required: true,
+const PaymentSchema = new Schema<IPayment>(
+  {
+    bookingId: {
+      type: Schema.Types.ObjectId,
+      ref: "Booking",
+      required: true,
     },
-    userId:{
-        type: Schema.Types.ObjectId,
-        ref:"User",
-        required: true,
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    transactionId:{
-        type: String,
-        required: true,
+    amount: {
+      type: Number,
+      required: true,
     },
-    paymentGateway:{
-        type: String,
-        default: 'Phonepe'
+    transactionId: {
+      type: String,
+      required: true,
     },
-    status:{
-        type: String,
-        enum: ["initiated" , "success" , "pending" , "failed"],
-        default: "initiated",
+    paymentGateway: {
+      type: String,
+      default: "stripe",
     },
-    pgResponse:Object
-},{timestamps:true})
+    status: {
+      type: String,
+      enum: ["initiated", "success", "pending", "failed"],
+      default: "initiated",
+    },
+    pgResponse: Object,
+  },
+  { timestamps: true }
+);
 
-export default mongoose.model<IPayment>("Payment",PaymentSchema)
+export default mongoose.model<IPayment>("Payment", PaymentSchema);

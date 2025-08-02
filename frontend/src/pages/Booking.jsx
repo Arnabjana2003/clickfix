@@ -8,80 +8,44 @@ import {
   FiMapPin,
   FiCalendar,
   FiUser,
-  FiCreditCard,
   FiArrowLeft,
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { SubCategoryApis } from "../apis/SubCategoryApis";
+import { IoPricetagsOutline } from "react-icons/io5";
+import AddressMapPicker from "../components/AddressMapPicker";
+import toast from "react-hot-toast";
+import { BookingApis } from "../apis/BookingApis";
 
 const Booking = () => {
   const { subCategoryId } = useParams();
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [relatedServices, setRelatedServices] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [address, setAddress] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    return tomorrow;
+  });
+  const [bookingLocationCoords, setBookingLocationCoords] = useState([]); // long,lat
   const [isLoading, setIsLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
 
-  // Sample data matching your ISubCategory interface
-  const sampleData = {
-    services: [
-      {
-        _id: "101",
-        name: "AC Repair",
-        categoryId: "1",
-        price: 89.99,
-        estimatedTimeInMinute: 90,
-        image: { url: "https://example.com/ac-repair.jpg" },
-        isActive: true,
-        numberOfProviders: 24,
-        description:
-          "Professional AC repair service with 1-year warranty on parts and labor.",
-        rating: 4.7,
-        reviews: 128,
-      },
-      // ... other services
-    ],
-    relatedServices: [
-      {
-        _id: "102",
-        name: "AC Installation",
-        categoryId: "1",
-        price: 199.99,
-        estimatedTimeInMinute: 240,
-        image: { url: "https://example.com/ac-installation.jpg" },
-        isActive: true,
-        numberOfProviders: 15,
-      },
-      {
-        _id: "103",
-        name: "AC Maintenance",
-        categoryId: "1",
-        price: 59.99,
-        estimatedTimeInMinute: 60,
-        image: { url: "https://example.com/ac-maintenance.jpg" },
-        isActive: true,
-        numberOfProviders: 32,
-      },
-    ],
-  };
+  useEffect(()=>{
+    window.scrollTo({behavior:'smooth',top:0})
+  },[])
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // In a real app, you would fetch from your API:
-        // const serviceRes = await fetch(`/api/services/${subCategoryId}`);
-        // const relatedRes = await fetch(`/api/services/${subCategoryId}/related`);
-
-        // Using sample data for demonstration
-        const foundService = sampleData.services.find(
-          (s) => s._id === subCategoryId
+        const { data } = await SubCategoryApis.getSubcategoryDetails(
+          subCategoryId
         );
-        setService(foundService);
-        setRelatedServices(sampleData.relatedServices);
+        setService(data);
+        // setRelatedServices(sampleData.relatedServices);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -93,26 +57,33 @@ const Booking = () => {
   }, [subCategoryId]);
 
   const handleBooking = async () => {
-    return;
+    console.log({
+      bookingLocationCoords,
+      selectedDate: selectedDate.toISOString(),
+    });
+    if (!bookingLocationCoords.length) {
+      toast.error("Select your location from the map");
+      return;
+    }
+    if (!selectedDate) {
+      toast.error("Select your preferred serviceing date");
+      return;
+    }
     setIsBooking(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // In a real app:
-      // await fetch('/api/bookings', {
-      //   method: 'POST',
-      //   body: JSON.stringify({
-      //     serviceId: subCategoryId,
-      //     date: selectedDate,
-      //     address,
-      //     paymentMethod
-      //   })
-      // });
-
-      navigate("/booking-confirmation", { state: { bookingId: "12345" } });
+      const { data } = await BookingApis.bookService({
+        locationCoords: bookingLocationCoords,
+        subCategoryId,
+        paymentMode: "online",
+        amount: service?.price,
+        preferredTime: selectedDate,
+      });
+      localStorage.setItem("ongoing_payment", String(data?.paymentId));
+      if (data?.paymentUrl) {
+        window.location.href = data?.paymentUrl;
+      }
     } catch (error) {
-      console.error("Booking failed:", error);
+      toast.error(String(error?.message || error));
     } finally {
       setIsBooking(false);
     }
@@ -160,18 +131,18 @@ const Booking = () => {
 
               <div className="flex items-center text-gray-600 mb-4">
                 <FiStar className="text-yellow-400 mr-1" />
-                <span className="font-medium">{service.rating}</span>
-                <span className="mx-1">({service.reviews} reviews)</span>
+                <span className="font-medium">{service.rating || 5}</span>
+                <span className="mx-1">({service.reviews || 51} reviews)</span>
               </div>
 
               <p className="text-gray-700 mb-6">{service.description}</p>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center">
-                  <FiDollarSign className="text-gray-500 mr-2" />
+                  <IoPricetagsOutline className="text-gray-500 mr-2" />
                   <div>
                     <p className="text-sm text-gray-500">Price</p>
-                    <p className="font-semibold">${service.price.toFixed(2)}</p>
+                    <p className="font-semibold">₹{service.price.toFixed(2)}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -196,7 +167,7 @@ const Booking = () => {
                   <FiUser className="text-gray-500 mr-2" />
                   <div>
                     <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-semibold">AC Services</p>
+                    <p className="font-semibold">{service?.categoryId?.name}</p>
                   </div>
                 </div>
               </div>
@@ -223,7 +194,14 @@ const Booking = () => {
                   timeFormat="HH:mm"
                   timeIntervals={30}
                   dateFormat="MMMM d, yyyy h:mm aa"
-                  minDate={new Date()}
+                  minDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
+                  maxDate={new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)}
+                  minTime={new Date(0, 0, 0, 8, 0, 0)} // 8 AM
+                  maxTime={new Date(0, 0, 0, 19, 0, 0)} // 7pm
+                  filterTime={(time) => {
+                    const hours = time.getHours();
+                    return hours >= 8 && hours <= 19;
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -234,69 +212,27 @@ const Booking = () => {
                   <FiMapPin className="inline mr-2" />
                   Service Address
                 </label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter your full address"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md h-24"
-                  required
-                />
-              </div>
-
-              {/* Payment Method */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FiCreditCard className="inline mr-2" />
-                  Payment Method
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="credit_card"
-                      checked={paymentMethod === "credit_card"}
-                      onChange={() => setPaymentMethod("credit_card")}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span>Credit/Debit Card</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="paypal"
-                      checked={paymentMethod === "paypal"}
-                      onChange={() => setPaymentMethod("paypal")}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span>PayPal</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="cash"
-                      checked={paymentMethod === "cash"}
-                      onChange={() => setPaymentMethod("cash")}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span>Cash on Service</span>
-                  </label>
+                <div className="w-full h-52">
+                  <AddressMapPicker
+                    onAddressSelected={(coords) =>
+                      setBookingLocationCoords([
+                        coords?.longitude,
+                        coords.latitude,
+                      ])
+                    }
+                  />
                 </div>
               </div>
 
               {/* Booking Button */}
               <button
                 onClick={handleBooking}
-                disabled={isBooking || !address}
-                className={`w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
-                  isBooking || !address ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+                disabled={isBooking || !bookingLocationCoords.length}
+                className={`w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer`}
               >
                 {isBooking
                   ? "Processing..."
-                  : `Book Now for $${service.price.toFixed(2)}`}
+                  : `Book Now for ₹${service.price.toFixed(2)}`}
               </button>
             </div>
           </div>
@@ -311,33 +247,33 @@ const Booking = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Service Fee</span>
-                <span className="font-medium">${service.price.toFixed(2)}</span>
+                <span className="font-medium">₹{service.price.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-gray-600">Tax (10%)</span>
                 <span className="font-medium">
-                  ${(service.price * 0.1).toFixed(2)}
+                  ₹{(service.price * 0.1).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between text-green-600">
-                <span>Discount (WELCOME20)</span>
-                <span>-${(service.price * 0.2).toFixed(2)}</span>
+                <span>Discount </span>
+                <span>-₹{(service.price * 0.1).toFixed(2)}</span>
               </div>
 
               <div className="border-t border-gray-200 pt-3 mt-2">
                 <div className="flex justify-between font-semibold">
                   <span>Total Payable</span>
                   <span className="text-blue-600">
-                    ${(service.price * 0.9).toFixed(2)}
+                    ₹{service.price.toFixed(2)}
                   </span>
                 </div>
               </div>
 
               <div className="text-sm text-green-600 bg-green-50 p-2 rounded-md mt-2">
                 <FiCheckCircle className="inline mr-1" />
-                You're saving ${(service.price * 0.2).toFixed(2)} with this
+                You're saving ₹{(service.price * 0.1).toFixed(2)} with this
                 booking
               </div>
             </div>
@@ -372,7 +308,7 @@ const Booking = () => {
                     </h3>
                     <div className="flex items-center text-sm text-gray-500">
                       <FiDollarSign className="mr-1" />
-                      <span>${related.price.toFixed(2)}</span>
+                      <span>₹{related.price.toFixed(2)}</span>
                       <span className="mx-2">•</span>
                       <FiClock className="mr-1" />
                       <span>{related.estimatedTimeInMinute} mins</span>

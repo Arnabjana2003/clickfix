@@ -1,13 +1,15 @@
+import { lazy, Suspense } from "react";
 import { motion } from "motion/react";
 import OuterContainer from "../components/OuterContainer";
 import RightGrid from "../components/RightGrid";
 import SearchBar from "../components/SearchBar";
 import NewSection from "../components/NewSection";
 import OfferingCard from "../components/OfferingCard";
-import Categories from "../components/Categories";
 import SectionHeader from "../components/SectionHeader";
 import { useNavigate } from "react-router-dom";
 import techniciansGrp from "../assets/technicians.png";
+
+const MostBooked = lazy(() => import("../components/MostBooked"));
 
 const offeringList = [
   {
@@ -17,6 +19,7 @@ const offeringList = [
       "https://trustworthyhomeservices.in/wp-content/uploads/2023/05/trustworthy-blog17.jpg",
     heading: "Deep AC cleaning",
     subHeadin: "AC service and repair",
+    goto: "/book/688e0d924cc0420e9a30631c",
   },
   {
     themeColor: "bg-amber-800",
@@ -25,6 +28,7 @@ const offeringList = [
       "https://img.freepik.com/premium-photo/portrait-young-latin-man-fixing-electricity-problem-with-cables-new-home-repair-renovation-home-concept_58466-13260.jpg",
     heading: "Qualified electrician",
     subHeadin: "Electric technicians",
+    goto: "/services/6880f542a2c062012a14672a",
   },
   {
     themeColor: "bg-blue-800",
@@ -33,6 +37,7 @@ const offeringList = [
       "https://riyadhacrepairmaintenance.com/wp-content/uploads/2024/09/Plumbing-repair-in-Riyadh.webp",
     heading: "Experienced Plumbers",
     subHeadin: "Repairing",
+    goto: "/services/6880f542a2c062012a146729",
   },
 ];
 
@@ -96,15 +101,18 @@ function LandingPage() {
               themeColor={item.themeColor}
               textColor={item.textColor}
               imgUrl={item.imgUrl}
+              goto={item?.goto}
             />
           ))}
         </div>
       </NewSection>
 
-      <NewSection>
-        <SectionHeader heading="Most booked services" />
-        <Categories />
-      </NewSection>
+      <Suspense fallback={<div>Loading...</div>}>
+        <NewSection>
+          <SectionHeader heading="Most booked services" />
+          <MostBooked />
+        </NewSection>
+      </Suspense>
 
       <NewSection>
         <div className="flex rounded-2xl overflow-hidden">
@@ -119,7 +127,10 @@ function LandingPage() {
             <p className="text-white font-semibold text-xl mt-5">
               Get the technicians at you doorstepin single click
             </p>
-            <button className="px-8 py-3 bg-white text-green-950 font-bold rounded-lg mt-8 cursor-pointer">
+            <button
+              onClick={() => navigate("/services")}
+              className="px-8 py-3 bg-white text-green-950 font-bold rounded-lg mt-8 cursor-pointer"
+            >
               Explore
             </button>
           </div>
@@ -128,7 +139,9 @@ function LandingPage() {
 
       <section className="my-32">
         <h1 className="text-5xl text-slate-300 font-bold">ClicknFix</h1>
-        <p className="text-4xl text-slate-300 font-semibold mt-5">Get Technicians at doorsteps</p>
+        <p className="text-4xl text-slate-300 font-semibold mt-5">
+          Get Technicians at doorsteps
+        </p>
       </section>
     </OuterContainer>
   );

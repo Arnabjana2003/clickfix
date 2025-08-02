@@ -22,6 +22,8 @@ import ExploreCategories from "./pages/ExploreCategories.jsx";
 import CategoryServices from "./pages/CategoryServices.jsx";
 import Booking from "./pages/Booking.jsx";
 import PaymentComponent from "./components/PaymentComponent.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+import PaymentCancel from "./pages/PaymentCancel.jsx";
 
 const router = createBrowserRouter([
   {
@@ -105,10 +107,26 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/pay",
+        path: "/book/:subCategoryId",
         element: (
           <Protector authentication={true}>
-            <PaymentComponent />
+            <Booking />
+          </Protector>
+        ),
+      },
+      {
+        path: "/payment/success",
+        element: (
+          <Protector authentication={true}>
+            <PaymentSuccess/>
+          </Protector>
+        ),
+      },
+      {
+        path: "/payment/cancel",
+        element: (
+          <Protector authentication={true}>
+            <PaymentCancel/>
           </Protector>
         ),
       },

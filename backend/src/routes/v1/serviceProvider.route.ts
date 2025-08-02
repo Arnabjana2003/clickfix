@@ -3,6 +3,8 @@ import authMiddleware from "../../middlewares/auth.middleware";
 import {
   addNewService,
   completeServiceProviderProfile,
+  getAllBookings,
+  updateBookingStatus,
   upgradeToServiceProvider,
 } from "../../controllers/serviceProvider.controller";
 import permissionMiddleware from "../../middlewares/permission.middleware";
@@ -35,6 +37,18 @@ serviceProviderRouter.delete(
   authMiddleware,
   permissionMiddleware("service:delete"),
   deleteService
+);
+serviceProviderRouter.get(
+  "/bookings",
+  authMiddleware,
+  permissionMiddleware("booking:view"),
+  getAllBookings
+);
+serviceProviderRouter.patch(
+  "/bookings",
+  authMiddleware,
+  permissionMiddleware("booking:update"),
+  updateBookingStatus
 );
 
 export default serviceProviderRouter;

@@ -12,6 +12,11 @@ import {
 import serviceModel, { IService } from "../models/service.model";
 import { RoleBasedAuthenticatedRequest } from "../middlewares/permission.middleware";
 import { setAuthCookies } from "../utils/cookieServices";
+import bookingModel from "../models/booking.model";
+
+export const getNormalBookingId = (denormalBookingId = "") => {
+  return denormalBookingId.slice(2);
+};
 
 export const upgradeToServiceProvider = asyncHandler(
   async (req: AuthenticatedRequest, res) => {
@@ -170,3 +175,38 @@ export const addNewService = asyncHandler(
       .json(new ApiResponse(201, newService, "Service created successfully"));
   }
 );
+
+export const getAllBookings = asyncHandler(
+  async (req: RoleBasedAuthenticatedRequest, res) => {
+    const service_provider = req.service_provider;
+    if (!service_provider)
+      throw new ApiError(403, "You dont have provider access");
+    const myBookings = await bookingModel
+      .find({ serviceProviderId: service_provider?._id })
+      .populate<any>("userId subCategoryId");
+    const bookings = myBookings.map((order) => ({
+      service: order?.subCategoryId?.name,
+      status: order?.status,
+      customerName: order?.userId?.name,
+      date: order?.scheduledAt,
+      address: order?.location?.coordinates,
+      notes: order?.notes,
+      bookingId: `BK${order?._id}`,
+    }));
+
+    res.status(200).json(new ApiResponse(200, bookings, "Fetched"));
+  }
+);
+
+export const updateBookingStatus = asyncHandler(async (req, res) => {
+  const { bookingId, newStatus } = req.body;
+  if (!bookingId || !newStatus)
+    throw new ApiError(400, "Booking id or status is missing");
+  const normalizedId = getNormalBookingId(bookingId);
+
+  const updatedOrder = await bookingModel.findByIdAndUpdate(normalizedId, {
+    status: newStatus,
+  });
+
+  res.status(200).json(new ApiResponse(200, {}, "Status updated"));
+});

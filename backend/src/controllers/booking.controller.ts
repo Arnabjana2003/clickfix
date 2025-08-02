@@ -7,112 +7,205 @@ import bookingModel from "../models/booking.model";
 import addressModel from "../models/address.model";
 import assignJob from "../helpers/jobAssigner.helper";
 import subCategory from "../models/subCategory";
+import { PaymentService } from "../utils/PaymentService";
+import mongoose from "mongoose";
+import paymentModel from "../models/payment.model";
+import { checkSessionStatus } from "../utils/stripeServices";
+import { JobAssignmentQueue } from "../redis/producerQueues";
 
 export const createBooking = asyncHandler(
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const userId = req.user?._id;
+  async (req: AuthenticatedRequest, res: Response) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const {
-      subCategoryId,
-      addressId,
-      notes,
-      paymentMode,
-      amount,
-      preferredTime,
-    } = req.body;
+    try {
+      const userId = req.user?._id;
+      const {
+        locationCoords,
+        subCategoryId,
+        notes,
+        paymentMode = "online",
+        amount,
+        preferredTime,
+      } = req.body;
 
-    if (
-      !addressId ||
-      !paymentMode ||
-      !amount ||
-      !preferredTime ||
-      !subCategoryId
-    ) {
-      throw new ApiError(
-        400,
-        "Please provide all required booking fields: subCategoryId, address, paymentMode, amount, preferredTime and location with coordinates"
-      );
-    }
+      if (
+        !locationCoords ||
+        !locationCoords.length ||
+        !paymentMode ||
+        !amount ||
+        !preferredTime ||
+        !subCategoryId
+      ) {
+        throw new ApiError(
+          400,
+          "Please provide all required booking fields: subCategoryId, address, paymentMode, amount, preferredTime and location with coordinates"
+        );
+      }
 
-    const isValidService = await subCategory.findById(subCategoryId);
-    if (!isValidService) throw new ApiError(404, "Service not availble");
+      const isValidService = await subCategory
+        .findById(subCategoryId)
+        .session(session);
+      if (!isValidService) throw new ApiError(404, "Service not available");
 
-    const fullAdress = await addressModel.findById(addressId);
-    if (!fullAdress) {
-      throw new ApiError(400, "Address not found");
-    }
+      const validPaymentModes = ["cod", "online"];
+      if (!validPaymentModes.includes(paymentMode)) {
+        throw new ApiError(
+          400,
+          'Invalid payment mode. Must be either "cod" or "online"'
+        );
+      }
 
-    const validPaymentModes = ["cod", "online"];
-    if (!validPaymentModes.includes(paymentMode)) {
-      throw new ApiError(
-        400,
-        'Invalid payment mode. Must be either "cod" or "online"'
-      );
-    }
+      if (amount <= 0) {
+        throw new ApiError(400, "Amount must be a positive number");
+      }
 
-    if (amount <= 0) {
-      throw new ApiError(400, "Amount must be a positive number");
-    }
+      const bookingData = {
+        userId,
+        subCategoryId,
+        notes,
+        paymentMode,
+        preferredTime,
+        location: {
+          type: "Point",
+          coordinates: locationCoords,
+        },
+        paymentDetails: {
+          amount: Number(amount),
+          status: paymentMode === "cod" ? "pending" : "initiated",
+        },
+      };
 
-    const bookingData = {
-      userId,
-      subCategoryId,
-      address: fullAdress,
-      notes,
-      paymentMode,
-      preferredTime,
-      location: {
-        type: "Point",
-        coordinates: fullAdress?.location?.coordinates,
-      },
-      paymentDetails: {
-        amount: Number(amount),
-      },
-    };
+      const [booking] = await bookingModel.create([bookingData], { session });
+      if (!booking) throw new ApiError(500, "Booking creation failed");
 
-    const booking = await bookingModel.create(bookingData);
+      if (paymentMode === "online") {
+        const { paymentId, url } = await PaymentService.createPaymentSession({
+          bookingId: booking._id,
+          price: Number(amount),
+          serviceName: isValidService.name,
+          userId: req.user?._id,
+        });
 
-    const assignedProvider = await assignJob({
-      categoryId: isValidService.categoryId,
-      subCategoryId,
-      durationInMinutes: isValidService.estimatedTimeInMinute,
-      latitude: fullAdress?.location?.coordinates[1],
-      longitude: fullAdress?.location?.coordinates[0],
-      preferredTime,
-    });
-    
-    console.log(assignedProvider)
+        await bookingModel.findByIdAndUpdate(
+          booking._id,
+          {
+            "paymentDetails.paymentId": paymentId,
+          },
+          { session }
+        );
 
-    if (!assignedProvider) {
+        await session.commitTransaction();
+        session.endSession();
+
+        res
+          .status(201)
+          .json(
+            new ApiResponse(
+              201,
+              { paymentUrl: url, paymentId },
+              "Order is created and payment is initialized"
+            )
+          );
+        return;
+      }
+
+      // For COD
+      await session.commitTransaction(); //TODO: for cod orders push the job in queue
+      session.endSession();
+
       res
         .status(201)
         .json(
           new ApiResponse(
             201,
             booking,
-            "Booking created successfully but no provider is availble at the preferred time."
+            "Booking created successfully. Payment will be collected on delivery"
           )
         );
+    } catch (error: any) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new ApiError(500, String(error?.message || error));
     }
+  }
+);
 
-    const updatedBooking = await bookingModel.findByIdAndUpdate(
-      booking._id,
+export const getBookingPaymentStatus = asyncHandler(async (req, res) => {
+  const { transactionId } = req.query;
+  if (!transactionId) throw new ApiError(400, "Transaction id is missing");
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const payment = await paymentModel
+      .findOne({ transactionId })
+      .populate("bookingId")
+      .session(session);
+
+    if (!payment) throw new ApiError(404, "Payment not found");
+
+    const pgData = await checkSessionStatus(payment.pgResponse?.id);
+    if (!pgData) throw new ApiError(500, "Payment status not available");
+
+    const updatedPayment = await paymentModel
+      .findOneAndUpdate(
+        { _id: payment._id },
+        {
+          $set: {
+            status: pgData.status,
+            pgResponse: pgData.session,
+            updatedAt: new Date(),
+          },
+        },
+        { new: true, session }
+      )
+      .populate("bookingId");
+
+    const updatedBookingData = await bookingModel.findByIdAndUpdate(
+      updatedPayment?.bookingId,
       {
-        isProviderAssigned: true,
-        serviceProviderId: assignedProvider.Provider._id,
-        scheduledAt: booking.preferredTime,
-        endTime: new Date(
-          booking.preferredTime.getTime() +
-            isValidService.estimatedTimeInMinute * 60 * 1000
-        ),
-      },
-      { new: true }
+        status: pgData.status == "failed" ? "failed" : "pending",
+        "paymentDetails.status": pgData.status,
+      }
     );
 
+    await session.commitTransaction();
+    console.log(`booking-${updatedBookingData?._id}`);
+    await JobAssignmentQueue.add(
+      `booking-${updatedBookingData?._id}`,
+      {
+        bookingId: updatedBookingData?._id,
+      },
+      { jobId: `booking-${updatedBookingData?._id}` }
+    );
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          paymentStatus: pgData.status,
+          paymentData: updatedPayment,
+          orderData: updatedPayment?.bookingId,
+        },
+        "Payment status updated successfully"
+      )
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+});
+
+export const userBookings = asyncHandler(
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?._id;
+    const bookings = await bookingModel.find({ userId });
     res
-      .status(201)
-      .json(
-        new ApiResponse(201, updatedBooking, "Booking created successfully")
-      );
+      .status(200)
+      .json(new ApiResponse(200, bookings, "Booking history fetched"));
   }
 );

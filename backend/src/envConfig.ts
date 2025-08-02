@@ -25,9 +25,15 @@ export default {
     STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY!,
     STRIPE_WEBHOOK_SECRET:process.env.STRIPE_WEBHOOK_SECRET!
   },
+  redis:{
+    host: process.env.REDIS_HOST!,
+    port: process.env.REDIS_PORT!,
+    password: process.env.REDIS_PASSWORD!
+  },
   server:{
     accessTokenSecret: process.env.ACCESS_TOKEN_SECRET!,
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET!,
     port: process.env.PORT!,
+    frontendUrl:process.env.FRONTEND_URL || "http://localhost:5173"
   }
 };

@@ -97,3 +97,33 @@ export const getSubCategories = asyncHandler(
       );
   }
 );
+
+export const getSubcategoryServices = asyncHandler(async (req, res) => {
+  const { categoryId } = req.query;
+  if (!categoryId) throw new ApiError(400, "Category id is missing");
+
+  const categoryData = await categoryModel
+    .findById(categoryId)
+    .select("-createdBy");
+  const subCategories = await subCategory.find({ categoryId });
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, { categoryData, subCategories }, "Data fetched")
+    );
+});
+
+export const getSubCategoryDetails = asyncHandler(async (req, res) => {
+  const { subCategoryId } = req.params;
+  if (!subCategoryId) throw new ApiError(400, "subcategory id is missing");
+
+  const subCategoryData = await subCategory
+    .findById(subCategoryId)
+    .populate("categoryId");
+  if (!subCategoryData) throw new ApiError(404, "Service not found");
+
+  res.status(200).json(new ApiResponse(200, subCategoryData, "Data fetched"));
+});
+
+

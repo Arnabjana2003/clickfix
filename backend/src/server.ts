@@ -11,12 +11,8 @@ import fs from "fs";
 import path from "path";
 import cookieParser from "cookie-parser";
 import sendMail from "./utils/nodemailer";
+import queueWorkers from "./redis/workers/index";
 import { getWelcomeMail } from "./utils/mailTempletes";
-import {
-  checkSessionStatus,
-  createStripeOrder,
-  handleStripeWebhook,
-} from "./utils/stripeServices";
 
 const app = express();
 // app.post(
@@ -71,7 +67,9 @@ morgan.token("json", (req: Request, res: Response) => {
 // app.use(morgan(":json", { stream: logFile }));
 
 // database connection
-connectDB();
+connectDB().then(() => {
+  queueWorkers.startQueueWorkers();
+});
 
 process.on("SIGINT", async () => {
   await mongoose.connection.close();
@@ -100,25 +98,6 @@ app.get("/test-mail", async (req, res) => {
   } catch (error) {
     res.send(error);
   }
-});
-
-app.get("/stripe", async (req, res) => {
-  const url = await createStripeOrder();
-  if (url) {
-    res.redirect(303, url);
-  } else {
-    res.send("error");
-  }
-});
-
-app.get("/status", async (req, res) => {
-  const { session_id } = req.query;
-  if (session_id) {
-    const r = await checkSessionStatus(session_id.toString());
-    res.send(r);
-    return;
-  }
-  res.send("error");
 });
 
 //controller apis

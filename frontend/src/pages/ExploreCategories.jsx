@@ -56,6 +56,7 @@ const ExploreCategories = () => {
       .catch((err) => {
         toast.error(String(err?.message));
       });
+      window.scrollTo({behavior:'smooth',top:0})
   }, []);
 
 

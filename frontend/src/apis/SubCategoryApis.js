@@ -30,7 +30,10 @@ export const SubCategoryApis = {
 
   updateSubCategory: async (subCategoryId, updateData) => {
     try {
-      const response = await API.patch(`/subcategory/${subCategoryId}`, updateData);
+      const response = await API.patch(
+        `/subcategory/${subCategoryId}`,
+        updateData
+      );
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -48,7 +51,9 @@ export const SubCategoryApis = {
 
   toggleSubCategoryStatus: async (subCategoryId, isActive) => {
     try {
-      const response = await API.patch(`/subcategory/${subCategoryId}/status`, { isActive });
+      const response = await API.patch(`/subcategory/${subCategoryId}/status`, {
+        isActive,
+      });
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -57,14 +62,38 @@ export const SubCategoryApis = {
 
   uploadSubCategoryImage: async (subCategoryId, imageData) => {
     try {
-      const response = await API.post(`/subcategory/${subCategoryId}/image`, imageData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const response = await API.post(
+        `/subcategory/${subCategoryId}/image`,
+        imageData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      });
+      );
       return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
-  }
+  },
+
+  getSubcategoryServices: async (categoryId) => {
+    try {
+      const response = await API.get(
+        `/subcategory/services?categoryId=${categoryId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  getSubcategoryDetails: async (subCategoryId) => {
+    try {
+      const response = await API.get(`/subcategory/${subCategoryId}`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
 };

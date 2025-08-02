@@ -39,15 +39,15 @@ export default function BookingCard({ booking }) {
   return (
     <>
       {/* Booking Card */}
-      <div className="w-full bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+      <div className="w-full bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 h-fit">
         <div className="p-4">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-lg font-semibold text-gray-800">
-                {booking.service.name}
+                {booking?.service?.name || "ClicknFix Service"}
               </h3>
               <p className="text-sm text-gray-500">
-                {booking.service.category}
+                {booking?.service?.category}
               </p>
             </div>
             <span
@@ -63,19 +63,27 @@ export default function BookingCard({ booking }) {
           <div className="mt-4 grid grid-cols-2 gap-2">
             <div className="flex items-center text-sm text-gray-600">
               <FiCalendar className="mr-2 text-gray-400" />
-              {new Date(booking.date).toLocaleDateString()}
+              {new Date(
+                booking.status == "pending"
+                  ? booking?.preferredTime
+                  : booking?.scheduledAt
+              ).toLocaleDateString()}
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <FiUser className="mr-2 text-gray-400" />
-              {booking.provider.name}
+              {booking?.provider?.name}
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <FiDollarSign className="mr-2 text-gray-400" />$
-              {booking.payment.amount.toFixed(2)}
+              {booking?.paymentDetails?.amount.toFixed(2)}
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <FiMapPin className="mr-2 text-gray-400" />
-              {booking.address.substring(0, 20)}...
+              {/* {booking.address.substring(0, 20)}... */}
+              <p className="font-medium">
+                {booking?.location?.coordinates[0]?.toFixed(3) || "N/A"},
+                {booking?.location?.coordinates[1]?.toFixed(3) || null}
+              </p>
             </div>
           </div>
 
@@ -94,9 +102,7 @@ export default function BookingCard({ booking }) {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div className="p-6 lg:min-w-[50vw]">
           {/* Modal Header */}
-          <h2 className="text-xl font-bold text-gray-800">
-                Booking Details
-              </h2>
+          <h2 className="text-xl font-bold text-gray-800">Booking Details</h2>
 
           {/* Service Details */}
           <div className="py-4 border-b">
@@ -104,16 +110,16 @@ export default function BookingCard({ booking }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Service</p>
-                <p className="font-medium">{booking.service.name}</p>
+                <p className="font-medium">{booking?.service?.name}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Category</p>
-                <p className="font-medium">{booking.service.category}</p>
+                <p className="font-medium">{booking?.service?.category}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Scheduled Date</p>
                 <p className="font-medium">
-                  {new Date(booking.date).toLocaleString()}
+                  {new Date(booking?.preferredTime).toLocaleString()}
                 </p>
               </div>
               <div>
@@ -134,42 +140,43 @@ export default function BookingCard({ booking }) {
           </div>
 
           {/* Provider Details */}
-          <div className="py-4 border-b">
-            <h3 className="text-lg font-semibold mb-2">Service Provider</h3>
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                {booking.provider.avatar ? (
-                  <img
-                    src={booking.provider.avatar}
-                    alt="Provider"
-                    className="w-full h-full rounded-full"
-                  />
-                ) : (
-                  <FiUser className="text-gray-500 text-xl" />
-                )}
-              </div>
-              <div>
-                <p className="font-medium">{booking.provider.name}</p>
-                <p className="text-sm text-gray-500">
-                  Rating: {booking.provider.rating} ★
-                </p>
-                <p className="text-sm text-gray-500">
-                  {booking.provider.completedJobs} jobs completed
-                </p>
+          {booking.provider && (
+            <div className="py-4 border-b">
+              <h3 className="text-lg font-semibold mb-2">Service Provider</h3>
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  {booking.provider.avatar ? (
+                    <img
+                      src={booking.provider.avatar}
+                      alt="Provider"
+                      className="w-full h-full rounded-full"
+                    />
+                  ) : (
+                    <FiUser className="text-gray-500 text-xl" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium">{booking.provider.name}</p>
+                  <p className="text-sm text-gray-500">
+                    Rating: {booking.provider.rating} ★
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {booking.provider.completedJobs} jobs completed
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Address Details */}
           <div className="py-4 border-b">
-            <h3 className="text-lg font-semibold mb-2">Service Address</h3>
+            <h3 className="text-lg font-semibold mb-2">Service Location</h3>
             <div className="flex items-start">
               <FiMapPin className="text-gray-400 mt-1 mr-2" />
               <div>
-                <p className="font-medium">{booking.address}</p>
-                <p className="text-sm text-gray-500">{booking.landmark}</p>
-                <p className="text-sm text-gray-500">
-                  {booking.city}, {booking.state} - {booking.pincode}
+                <p className="font-medium">
+                  {booking?.location?.coordinates[0]?.toFixed(3) || "N/A"},
+                  {booking?.location?.coordinates[1]?.toFixed(3) || null}
                 </p>
               </div>
             </div>
@@ -179,14 +186,14 @@ export default function BookingCard({ booking }) {
           <div className="py-4 border-b">
             <h3 className="text-lg font-semibold mb-2">Payment Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              {/* <div>
                 <p className="text-sm text-gray-500">Payment Method</p>
                 <p className="font-medium">{booking.payment.method}</p>
-              </div>
+              </div> */}
               <div>
                 <p className="text-sm text-gray-500">Amount Paid</p>
                 <p className="font-medium">
-                  ${booking.payment.amount.toFixed(2)}
+                  ${booking?.paymentDetails?.amount.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -194,19 +201,21 @@ export default function BookingCard({ booking }) {
                 <p className="font-medium">
                   <span
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                      booking.payment.status === "paid"
+                      booking?.paymentDetails?.status === "paid"
                         ? "bg-green-100 text-green-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
-                    {booking.payment.status === "paid" ? "Paid" : "Pending"}
+                    {booking?.paymentDetails?.status === "paid"
+                      ? "Paid"
+                      : "Pending"}
                   </span>
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Transaction ID</p>
                 <p className="font-medium font-mono text-sm">
-                  {booking.payment.transactionId}
+                  {booking?.paymentDetails?.paymentId || "N/A"}
                 </p>
               </div>
             </div>
@@ -214,7 +223,7 @@ export default function BookingCard({ booking }) {
 
           {/* Additional Actions */}
           <div className="pt-4 flex justify-end space-x-3">
-            {booking.status === "confirmed" && (
+            {booking?.status === "confirmed" && (
               <button className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200">
                 Cancel Booking
               </button>

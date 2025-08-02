@@ -4,6 +4,8 @@ import permissionMiddleware from "../../middlewares/permission.middleware";
 import {
   createSubCategoty,
   getSubCategories,
+  getSubCategoryDetails,
+  getSubcategoryServices,
   removeSubCategoty,
 } from "../../controllers/subCategory.controller";
 
@@ -22,5 +24,7 @@ subCategoryRouter.delete(
   removeSubCategoty
 );
 subCategoryRouter.get("/", getSubCategories);
+subCategoryRouter.get("/services", getSubcategoryServices);
+subCategoryRouter.get("/:subCategoryId", getSubCategoryDetails);
 
 export default subCategoryRouter;

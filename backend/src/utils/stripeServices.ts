@@ -7,37 +7,44 @@ const stripe: Stripe = new Stripe(envConfig.stripe.STRIPE_SECRET_KEY, {
   typescript: true,
 });
 
-export const createStripeOrder = async () => {
+export interface ICreatePaymentParams {
+  bookingId: string;
+  price: number; // in paise (e.g., ₹100 = 10000)
+  serviceName: string;
+  userId: string;
+  transactionId: string;
+}
+
+export const createStripeOrder = async ({
+  bookingId,
+  price,
+  serviceName,
+  userId,
+  transactionId,
+}: ICreatePaymentParams) => {
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
         price_data: {
           currency: "inr",
           product_data: {
-            name: "ClicknFiz Services",
+            name: `ClicknFix - ${serviceName || "Services"}`,
           },
-          unit_amount: 5000,
-        },
-        quantity: 1,
-      },
-      {
-        price_data: {
-          currency: "inr",
-          product_data: {
-            name: "ClicknFix Services",
-          },
-          unit_amount: 6000,
+          unit_amount: price,
         },
         quantity: 1,
       },
     ],
     mode: "payment",
-    success_url: "http://localhost:5000/success",
-    cancel_url: "http://localhost:5000/cancel",
+    success_url: `${envConfig.server.frontendUrl}/payment/success?bookingId=${bookingId}&transactionId=${transactionId}`,
+    cancel_url: `${envConfig.server.frontendUrl}/payment/cancel?bookingId=${bookingId}`,
+    metadata: {
+      bookingId: bookingId.toString(),
+      userId: userId.toString(),
+      transactionId: transactionId,
+    },
   });
-
-  console.log(session);
-  return session.url;
+  return session;
 };
 
 export const handleStripeWebhook = async (req: Request, res: Response) => {
