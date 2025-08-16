@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../store/auth.slice";
-import AuthService from "../apis/authService";
+import AuthService from "../apis/AuthService.js";
 
 export default function UserSignup() {
   const dispatch = useDispatch();
