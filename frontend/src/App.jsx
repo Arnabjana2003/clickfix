@@ -3,7 +3,7 @@ import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
-import AuthService from "./apis/AuthService";
+import AuthService from "./apis/AuthService.js";
 import { useDispatch } from "react-redux";
 import { login } from "./store/auth.slice";
 
