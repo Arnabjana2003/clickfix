@@ -3,10 +3,7 @@ import envConfig from "../envConfig";
 import { Redis } from "ioredis";
 
 // Initialize Redis connection
-const redisConnection = new Redis({
-  host: envConfig.redis.host || "127.0.0.1",
-  port: Number(envConfig.redis.port) || 6379,
-  password: envConfig.redis.password || "clicknfix-redis-server",
+const redisConnection = new Redis(envConfig.redis.url{
 
   keepAlive: 10 * 1000,
   maxRetriesPerRequest: null,
