@@ -26,7 +26,7 @@ export default {
     STRIPE_WEBHOOK_SECRET:process.env.STRIPE_WEBHOOK_SECRET!
   },
   redis:{
-    host: process.env.REDIS_URL!,
+    url: process.env.REDIS_URL!,
   },
   server:{
     accessTokenSecret: process.env.ACCESS_TOKEN_SECRET!,

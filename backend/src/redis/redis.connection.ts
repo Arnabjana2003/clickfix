@@ -3,8 +3,7 @@ import envConfig from "../envConfig";
 import { Redis } from "ioredis";
 
 // Initialize Redis connection
-const redisConnection = new Redis(envConfig.redis.url{
-
+const redisConnection = new Redis(envConfig.redis.url,{
   keepAlive: 10 * 1000,
   maxRetriesPerRequest: null,
   enableOfflineQueue: true,
