@@ -5,7 +5,7 @@ import { CgProfile } from "react-icons/cg";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import AuthService from "../apis/authService.js";
+import AuthService from "../apis/AuthService.js";
 import toast from "react-hot-toast";
 import { logout } from "../store/auth.slice";
 

@@ -12,11 +12,11 @@ import {
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { SubCategoryApis } from "../apis/SubCategoryApis";
+import { SubCategoryApis } from "../apis/SubCategoryApis.js";
 import { IoPricetagsOutline } from "react-icons/io5";
 import AddressMapPicker from "../components/AddressMapPicker";
 import toast from "react-hot-toast";
-import { BookingApis } from "../apis/BookingApis";
+import { BookingApis } from "../apis/BookingApis.js";
 
 const Booking = () => {
   const { subCategoryId } = useParams();

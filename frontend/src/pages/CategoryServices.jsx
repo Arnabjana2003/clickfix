@@ -7,7 +7,7 @@ import {
   FiStar,
   FiCheckCircle,
 } from "react-icons/fi";
-import { SubCategoryApis } from "../apis/SubCategoryApis";
+import { SubCategoryApis } from "../apis/SubCategoryApis.js";
 import toast from "react-hot-toast";
 import OuterContainer from "../components/OuterContainer";
 

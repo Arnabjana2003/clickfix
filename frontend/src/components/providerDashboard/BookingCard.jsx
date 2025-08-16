@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../Modal";
 import BookingDetails from "./BookingDetails";
-import ProviderApis from "../../apis/ProviderApis";
+import ProviderApis from "../../apis/ProviderApis.js";
 import toast from "react-hot-toast";
 
 function BookingCard({ bookingData }) {

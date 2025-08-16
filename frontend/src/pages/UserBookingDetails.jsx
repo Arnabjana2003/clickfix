@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import BookingCard from "../components/UserProfile/BookingCard";
 import OuterContainer from "../components/OuterContainer";
-import { BookingApis } from "../apis/BookingApis";
+import { BookingApis } from "../apis/BookingApis.js";
 import toast from "react-hot-toast";
 
 const sampleBooking = {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import BookingCard from "./BookingCard";
 import BookingCardSkeleton from "./BookingCardSkeleton";
-import ProviderApis from "../../apis/ProviderApis";
+import ProviderApis from "../../apis/ProviderApis.js";
 
 const data = [
   {

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { CategoryApis } from "../../apis/CategoryApis";
-import { SubCategoryApis } from "../../apis/SubCategoryApis";
-import ServiceApis from "../../apis/ServicesApis";
+import { CategoryApis } from "../../apis/CategoryApis.js";
+import { SubCategoryApis } from "../../apis/SubCategoryApis.js";
+import ServiceApis from "../../apis/ServicesApis.js";
 import constants from "../../utils/constants";
 
 export default function Services() {

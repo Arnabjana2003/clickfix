@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaCheckCircle } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { BookingApis } from "../apis/BookingApis";
+import { BookingApis } from "../apis/BookingApis.js";
 
 const PaymentSuccess = () => {
   const location = useLocation();

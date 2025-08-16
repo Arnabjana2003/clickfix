@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BookingApis } from "../apis/BookingApis";
+import { BookingApis } from "../apis/BookingApis.js";
 import { Link } from "react-router-dom";
 
 

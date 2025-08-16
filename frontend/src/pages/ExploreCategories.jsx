@@ -10,7 +10,7 @@ import {
   FiMonitor,
   FiWind,
 } from "react-icons/fi";
-import { CategoryApis } from "../apis/CategoryApis";
+import { CategoryApis } from "../apis/CategoryApis.js";
 import CategoryCard from "../skelitons/services/CategoryCard";
 import PopularServiceCard from "../skelitons/services/PopularServiceCard";
 import toast from "react-hot-toast";
