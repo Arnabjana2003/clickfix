@@ -1,12 +1,12 @@
 import { CgProfile } from "react-icons/cg";
 import { FaTasks } from "react-icons/fa";
-import { MdPayment, MdOutlineHomeRepairService  } from "react-icons/md";
+import { MdPayment, MdOutlineHomeRepairService } from "react-icons/md";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { VscFeedback } from "react-icons/vsc";
 import Booking from "../components/providerDashboard/Booking";
 import { useState } from "react";
-import Profile from "../components/providerDashboard/profile";
-import PendingRequests from "../components/providerDashboard/pendingRequests";
+import Profile from "../components/providerDashboard/Profile";
+import PendingRequests from "../components/providerDashboard/PendingRequests";
 import Feedbacks from "../components/providerDashboard/Feedbacks";
 import Transactions from "../components/providerDashboard/Transactions";
 import DashboardAnalytics from "../components/providerDashboard/DashboardAnalytics";
@@ -26,7 +26,7 @@ const navItems = [
   {
     key: "service",
     label: "Services",
-    icon: <MdOutlineHomeRepairService  size={22} color="#314158" />,
+    icon: <MdOutlineHomeRepairService size={22} color="#314158" />,
   },
   {
     key: "payment",
