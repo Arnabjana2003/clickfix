@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import AuthService from "./apis/AuthService.js";
 import { useDispatch } from "react-redux";
 import { login } from "./store/auth.slice";
+import AIChatWidget from "./components/AIChatWidget.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -20,6 +21,7 @@ function App() {
     <div className="max-w-[100vw] overflow-x-hidden">
       <NavBar />
       <Outlet />
+      <AIChatWidget/>
       <Footer />
       <Toaster />
     </div>

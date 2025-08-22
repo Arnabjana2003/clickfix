@@ -33,5 +33,8 @@ export default {
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET!,
     port: process.env.PORT!,
     frontendUrl:process.env.FRONTEND_URL || "http://localhost:5173"
+  },
+  gemini:{
+    apiKey: process.env.GEMINI_API_KEY!
   }
 };

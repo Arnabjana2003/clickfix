@@ -88,9 +88,9 @@ function LandingPage() {
         </div>
       </div>
 
-      <div>
+      {/* <div>
         <SearchBar />
-      </div>
+      </div> */}
       <NewSection>
         <div className="flex flex-wrap lg:gap-5 justify-between">
           {offeringList.map((item, index) => (
