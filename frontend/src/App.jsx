@@ -7,6 +7,7 @@ import AuthService from "./apis/AuthService.js";
 import { useDispatch } from "react-redux";
 import { login } from "./store/auth.slice";
 import AIChatWidget from "./components/AIChatWidget.jsx";
+import LoadingScreen from "./pages/LoadingScreen.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -16,7 +17,7 @@ function App() {
       .then((res) => dispatch(login(res.data)))
       .finally(() => setIsLoading(false));
   }, []);
-  if (isLoading) return <p>Loading</p>;
+  if (isLoading) return <LoadingScreen/>;
   return (
     <div className="max-w-[100vw] overflow-x-hidden">
       <NavBar />

@@ -4,6 +4,38 @@ import { TbMessageChatbot } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
 import { FiSend } from "react-icons/fi";
 
+const formatResponse = (text='') => {
+    console.log({text})
+  return text.split("\n").map((paragraph, idx) => {
+    if (paragraph.trim() === "") return null;
+
+    if (/^(\d+\.\s|\*\s)/.test(paragraph)) {
+      return (
+        <li key={idx} className="ml-4 list-disc">
+          {paragraph.replace(/^(\d+\.\s|\*\s)/, "")}
+        </li>
+      );
+    }
+
+    if (paragraph.includes("**")) {
+      const parts = paragraph.split("**");
+      return (
+        <p key={idx} className="mb-2">
+          {parts.map((part, i) =>
+            i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+          )}
+        </p>
+      );
+    }
+
+    return (
+      <p key={idx} className="mb-2">
+        {paragraph}
+      </p>
+    );
+  });
+};
+
 const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -105,7 +137,7 @@ const AIChatWidget = () => {
                       : "bg-gray-200 text-gray-800"
                   }`}
                 >
-                  {msg.text}
+                  {formatResponse(msg.text)}
                 </div>
               </div>
             ))}
