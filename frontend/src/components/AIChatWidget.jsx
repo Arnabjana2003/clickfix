@@ -5,7 +5,6 @@ import { IoMdClose } from "react-icons/io";
 import { FiSend } from "react-icons/fi";
 
 const formatResponse = (text='') => {
-    console.log({text})
   return text.split("\n").map((paragraph, idx) => {
     if (paragraph.trim() === "") return null;
 
@@ -66,7 +65,7 @@ const AIChatWidget = () => {
 
     try {
       const data = await GeneralApis.getChatbotReply(inputMessage);
-      const reply = data.reply || "Sorry! I didn't get you.";
+      const reply = data?.data.reply || "Sorry! I didn't get you.";
       setMessages((prev) => [...prev, { text: reply || "", sender: "bot" }]);
     } catch (error) {
       console.error("Error:", error);

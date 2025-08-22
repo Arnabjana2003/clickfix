@@ -79,7 +79,6 @@ const CategoryServices = () => {
         const { data } = await SubCategoryApis.getSubcategoryServices(
           categoryId
         );
-        console.log(data);
         setCategory(data?.categoryData);
         setSubCategories(data?.subCategories);
       } catch (error) {

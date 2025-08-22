@@ -57,10 +57,6 @@ const Booking = () => {
   }, [subCategoryId]);
 
   const handleBooking = async () => {
-    console.log({
-      bookingLocationCoords,
-      selectedDate: selectedDate.toISOString(),
-    });
     if (!bookingLocationCoords.length) {
       toast.error("Select your location from the map");
       return;

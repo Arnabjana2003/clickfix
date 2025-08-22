@@ -27,7 +27,6 @@ const PaymentSuccess = () => {
           transactionId
         );
         localStorage.removeItem("ongoing_payment");
-        console.log(data);
         if (data?.paymentStatus == "success") {
           setBooking(data.orderData);
         } else {

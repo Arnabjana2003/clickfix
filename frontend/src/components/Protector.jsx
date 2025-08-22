@@ -9,7 +9,6 @@ function Protector({ authentication = true, children }) {
   const userData = useSelector((state) => state?.auth?.userData);
 
   useEffect(() => {
-    // console.log(userData);
     const redirectPath = location.state?.from || "/";
 
     if (

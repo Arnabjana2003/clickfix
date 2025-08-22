@@ -39,7 +39,6 @@ function UserBookingDetails() {
     const fetchBookings = async () => {
       try {
         const { data } = await BookingApis.getUserBookings();
-        console.log(data);
         setBookings(data);
       } catch (error) {
         toast.error(String(error?.message || error));
